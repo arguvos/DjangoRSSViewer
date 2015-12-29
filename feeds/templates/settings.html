@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block name %}Settings{% endblock %}
+{% block content %}
+<form action="/settings/" method="post" id='main_form'> {% csrf_token %}
+    <h2 class="underline">Add URL subscription:</h2>
+    <input type="text" value="" placeholder="Input here your URL" name="url_text" size="200" style="width: 90%"/>
+    <button style="width: 8%"  onclick="setAndSumbit('add_feed','')" name="add_btn">Add</button>
+    <br> 
+    <br>
+    <br>
+    <br>
+
+    <h2 class="underline">Your subscription:</h2>
+    <table border="1" style="width: 100%">
+    {% for feed in feeds%}
+    <tr>
+	<td style="width: 100px" align="left">
+		<input type="checkbox" name="show[]" value="{{feed.id}}"
+			{% if feed.show %}
+				checked
+			{% endif %}
+		/>
+	</td>
+	<td align="center">
+	    	User: {{feed.user}}</br>
+	    	Date: {{feed.date}}</br>
+	    	URL: {{feed.url.url}}</br>
+	</td>
+	<td style="width: 100px" align="right">
+	    <button align="right" id="remove_btn" onclick="setAndSumbit('remove','{{feed.id}}')">Remove it</button></br>
+	</td>
+    </tr>
+    {% endfor %}
+    </table>
+
+    <button onclick="setAndSumbit('filter','{% for feed in feeds %}{{feed.id}} {% endfor %}')">Set Filter</button>
+    <div style="width: 100%" align="center"> 
+    <button onclick="setAndSumbit('prev_page','')">Prev Page</button>
+	{{ numb_page }}/{{ max_page }}
+    <button onclick="setAndSumbit('next_page','')">Next Page</button>
+    </div>
+    <input type="hidden" value="{{numb_page}}" name="numb_page"></br></br>
+    <input type="hidden" value="" name="action" id="action"></br></br>
+    <input type="hidden" value="" name="additional_info" id="additional_info"></br></br>
+
+    <h2 class="underline">For forced update parser:</h2>
+    <button name="update_parser" onclick="setAndSumbit('update_parser','')">Update Parser</button></br></br>
+    
+    <h2 class="underline">For clean all your  subscription:</h2>
+    <button  name="clean_all" onclick="setAndSumbit('clean_all','')" >Clean All</button></br></br>
+
+    <h2 class="underline">Navigation:</h2>
+    <a href="/feeds/">Feeds</a></br>
+    <a href="/logout/">Logout</a></br>
+</form>
+
+	<script>
+		function setAndSumbit(action, additional_info) {
+			document.getElementById("action").value=action;
+			document.getElementById("additional_info").value=additional_info;
+			document.getElementById("main_form").submit();
+		}
+	</script>
+
+{% endblock %}

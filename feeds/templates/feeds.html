@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block name %}Feeds{% endblock %}
+{% block content %}
+<form action="/feeds/" method="post" id="main_form"> {% csrf_token %}
+    {% for image in images %}
+    	<div>
+            <h2 class="underline">{{ image.date }}</h2>
+            <img src="{{ image.image_url }}"></br>
+	    <h3> URL: {{ image.rss_url.url }}</h3></br></br>
+	</div>
+    {% endfor %}
+    <button onclick="setAndSumbit('Prev Page')"> Prev Page </button>
+    	{{ numb_page }}/{{ max_page }}
+    <button onclick="setAndSumbit('Next Page')"> Next Page </button>
+    <input type="hidden" value="{{ numb_page }}" name="numb_page"></br></br>
+    <input type="hidden" value="" name="action" id="action"></br></br>
+    
+    <h2 class="underline">Navigation:</h2>
+    <a href="/settings/">Settings</a></br>
+    <a href="/logout/">Logout</a></br>
+<form>
+	 <script>
+        	function setAndSumbit(text) {
+			document.getElementById("action").value=text;
+			document.getElementById("main_form").submit();
+	        }
+        </script>
+
+{% endblock %}
