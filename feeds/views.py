@@ -18,6 +18,8 @@ def show_settings(request):
     numb_page = 0
     action = request.POST.get('action','')
     additional_info =  request.POST.get('additional_info','')
+    force_update = 'false'
+
     if request.POST.get('url_text') and (action == 'add_feed'):
         url_q = request.POST['url_text']
         url_q = url_q.strip()
@@ -31,7 +33,17 @@ def show_settings(request):
             else:
                 rss_url_q = RSS_url.objects.create(url = url_q)
                 Subscription.objects.create(user = user_q, url = rss_url_q)
-
+    elif action == 'update_parser':
+        f = open('/home/ubuntu/django_site/mysite/sync_parser', 'w+')
+        status_str = f.readline()[0:-1]
+        if status_str is None or status_str == '':
+            f.write('sync_now\n')
+            force_update = 'sync_now'
+        elif status_str == 'sync_now':
+            force_updte = 'sync_now'
+        elif status_str == 'in_sync':
+            force_update = 'in_sync'
+        f.close()
     elif action == 'clean_all':
         clean_db()
     elif action == 'remove':
@@ -52,6 +64,10 @@ def show_settings(request):
                 subcription.save()
             except Exception:
                pass
+    if action != 'update_parser':
+        f = open('/home/ubuntu/django_site/mysite/sync_parser', 'r')
+        force_update = f.readline()[0:-1]
+        f.close()
     count_note_on_page = 5
     first_note = 0
     last_note = 5
@@ -79,9 +95,10 @@ def show_settings(request):
     first_note = numb_page * count_note_on_page
     last_note = first_note + count_note_on_page
     feeds = feeds[int(first_note) : int(last_note)]
+
     return render( request,
         'settings.html',
-        { 'feeds': feeds, 'numb_page': numb_page, 'max_page': max_page }
+        { 'feeds': feeds, 'numb_page': numb_page, 'max_page': max_page, 'force_update': force_update }
         )
  
  

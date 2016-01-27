@@ -44,8 +44,15 @@
     <input type="hidden" value="" name="additional_info" id="additional_info"></br></br>
 
     <h2 class="underline">For forced update parser:</h2>
-    <button name="update_parser" onclick="setAndSumbit('update_parser','')">Update Parser</button></br></br>
-    
+    <button name="update_parser" onclick="setAndSumbit('update_parser','')">Update Parser</button>
+    {% if force_update == 'sync_now'%}
+    	Forced update started.
+    {% elif force_update == 'in_sync'%}
+    	Not now, update already started, please retray five minits later.
+    {% endif %}
+    </br>
+    </br>
+
     <h2 class="underline">For clean all your  subscription:</h2>
     <button  name="clean_all" onclick="setAndSumbit('clean_all','')" >Clean All</button></br></br>
 

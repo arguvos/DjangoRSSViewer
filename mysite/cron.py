@@ -20,6 +20,8 @@ import re
 
 IMG_URL_REGEX = re.compile('https?://(?:[a-z0-9\-]+\.)+[a-z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png)')
 
+#APP_PATH = BASE_DIR
+
 class UpdateFeeds(CronJobBase):
     """
     Send an email with the user count.
@@ -30,41 +32,22 @@ class UpdateFeeds(CronJobBase):
     code = 'cron.UpdateFeeds'
 
     def do(self):
-        print('start__parsing')
-        for rss in RSS_url.objects.all():
-            date_for_sync = self.get_date_to_sync(rss)
-            for entrie in feedparser.parse(rss.url).entries:
-                date_for_sync = date_for_sync.replace(tzinfo=None)
-                date_time_publish = datetime.fromtimestamp(mktime(entrie.published_parsed))
-#                print(dateutil.parser.parse(date_for_sync))
-                if date_time_publish > date_for_sync:
-                    #print(entrie.title)
-                    try:
-                        for img_url in IMG_URL_REGEX.findall(entrie.summary):
-                            sizes = getsizes(img_url)
-                            if sizes[1] is not None:
-                                if (sizes[1][0] < 1024) and (sizes[1][1] < 1024):
-                                    Images.objects.create(rss_url = rss, image_url = img_url)
-                    except Exception:
-                        pass
-                    for enclosure in entrie.enclosures:
-                        sizes = getsizes(enclosure.href)
-                        if sizes[1] is not None:
-                            if (sizes[1][0] < 1024) and (sizes[1][1] < 1024):
-                                Images.objects.create(rss_url = rss, image_url = enclosure.href)
-        print('end__parsing')
+        parse_feeds_urls()
 
 
-    def get_date_to_sync(self, rss_url_obj):
-        create_date = rss_url_obj.date
-        try:
-            last_image_date = Images.objects.filter(url__exact = rss_url_obj.url).order_by('-date')[0].date
-            if last_image_date > create_date:
-                return last_image_date
-            else:
-                return create_date 
-        except Exception:
-            return create_date
+
+def get_date_to_sync(rss):
+    try:
+        images = Images.objects.filter(rss_url__exact = rss).order_by('-date')
+        if len(images) <= 0:
+            return None
+        last_image_date = images[0].date
+        if last_image_date > rss.date:
+            return last_image_date
+        else:
+            return rss.date 
+    except Exception:
+        return None
 
 
 
@@ -86,4 +69,32 @@ def getsizes(uri):
     file.close()
     return size, None
 
+
+
+def parse_feeds_urls():
+    print('start__parsing')
+    for rss in RSS_url.objects.all():
+        date_for_sync = get_date_to_sync(rss)
+        for entrie in feedparser.parse(rss.url).entries:
+            if date_for_sync is not None:
+                date_for_sync = date_for_sync.replace(tzinfo=None)
+                date_time_publish = datetime.fromtimestamp(mktime(entrie.published_parsed))
+#            print(dateutil.parser.parse(date_for_sync))
+                if date_time_publish < date_for_sync:
+                    continue
+                #print(entrie.title)
+            try:
+                for img_url in IMG_URL_REGEX.findall(entrie.summary):
+                    sizes = getsizes(img_url)
+                    if sizes[1] is not None:
+                        if (sizes[1][0] < 1024) and (sizes[1][1] < 1024):
+                            Images.objects.create(rss_url = rss, image_url = img_url)
+            except Exception:
+                pass
+            for enclosure in entrie.enclosures:
+                sizes = getsizes(enclosure.href)
+                if sizes[1] is not None:
+                    if (sizes[1][0] < 1024) and (sizes[1][1] < 1024):
+                         Images.objects.create(rss_url = rss, image_url = enclosure.href)
+    print('end__parsing')
 
